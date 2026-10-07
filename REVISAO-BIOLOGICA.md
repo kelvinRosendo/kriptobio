@@ -21,6 +21,10 @@ Não são mostrados todos os vasos, capilares, linfonodos, válvulas, tecidos li
 
 ## Fontes consultadas
 
+- [OpenStax — Anatomy and Physiology 2e, seção 21.1](https://openstax.org/books/anatomy-and-physiology-2e/pages/21-1-anatomy-of-the-lymphatic-and-immune-systems): figuras 21.2 e 21.4 consultadas como referências visuais de organização regional e drenagem. As três imagens fornecidas pelo usuário serviram como inspiração de composição, não como fonte exclusiva de validação. Não foram incorporadas ou copiadas imagens comerciais. As geometrias do site continuam sendo ilustrações originais.
+
+Refinamento inspirado nessas referências: coletores superficiais mais finos e ramificados; maior representação de grupos cervicais, axilares e inguinais; exemplos abdominopélvicos e poplíteos; lobulação superficial esquemática do timo; baço achatado com contorno assimétrico e concavidade medial; contexto ósseo translúcido na pelve e no fêmur proximal. A distribuição é representativa e não reproduz todos os vasos de uma pessoa. A forma do timo não especifica idade ou estado de involução.
+
 - [NCBI / StatPearls — Anatomy, Lymphatic System](https://www.ncbi.nlm.nih.gov/books/NBK513247/): drenagem, cisterna do quilo e variações do ducto torácico.
 - [NCI / SEER — Lymph Nodes](https://training.seer.cancer.gov/anatomy/lymphatic/components/nodes.html): grupos regionais, forma, entrada aferente e saída eferente no hilo.
 - [NCI / SEER — Spleen](https://training.seer.cancer.gov/anatomy/lymphatic/components/spleen.html): posição e filtração do sangue.
