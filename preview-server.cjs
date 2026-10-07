@@ -1,0 +1,4 @@
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+const allowed=new Set(['index.html','index-3d.html','experience.css','experience.js','vendor/three.offline.js','models/anatomy-data.js','models/skin-data.js','models/LICENSE-MODEL.txt']);
+http.createServer((req,res)=>{let file;try{file=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'index.html'}catch{res.writeHead(400).end();return}if(!allowed.has(file)){res.writeHead(404).end();return}const type=file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':'text/plain';res.setHeader('Content-Type',type+'; charset=utf-8');fs.createReadStream(path.join(__dirname,file)).on('error',()=>res.writeHead(404).end()).pipe(res)}).listen(8080,'127.0.0.1',()=>console.log('KRIPTOBIO: http://127.0.0.1:8080'));
+

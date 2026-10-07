@@ -1,0 +1,38 @@
+ATTRIBUTION / LICENSING NOTES — KRIPTOBIO 3D
+
+Included skin model: models/skin.glb and decoded models/skin-data.js.
+BodyParts3D version 3.0, © Database Center for Life Science (DBCLS).
+Source: https://github.com/yamz8/human-body-simulator
+Upstream mirror: https://github.com/Kevin-Mattheus-Moerman/BodyParts3D
+Original archive: https://doi.org/10.18908/lsdba.nbdc00837-000
+License: CC BY-SA 2.1 Japan. See models/LICENSE-SKIN.txt.
+The Draco model was decoded to position/index buffers without geometry changes.
+Runtime scale, centering, color and transparency are adaptations under the same license.
+models/SKIN-NOTICES.md is the upstream full notice; only its skin section applies
+to the downloaded skin. Skeleton and organ assets from that project are not included.
+
+Included muscle model: models/anatomy.glb and models/anatomy-data.js.
+The embedded binary is unchanged. Runtime orientation, scale, normals and materials
+are adapted under CC BY-SA 2.1 Japan. See models/LICENSE-MODEL.txt.
+
+Three.js r169: MIT. vendor/LICENSE-THREE.txt.
+vendor/three.offline.js repackages its named exports for classic-script offline use.
+Draco decoder is used only during preparation, not in the browser runtime.
+Procedural lymphatic vessels, organs, nodes and cells are educational illustrations.
+
+Original V6 attribution follows (candidate assets below are not included):
+
+Anatomy base model:
+- BodyParts3D — Database Center for Life Science (DBCLS), Japan
+- Z-Anatomy — open 3D anatomy atlas
+- Integration source/reference: WaterCMY/anatomy-3d
+
+The referenced repository documents the anatomy.glb derivative as CC BY-SA
+and requires attribution to BodyParts3D / DBCLS and Z-Anatomy.
+
+Lymphatic model candidate:
+- "Lymphatic System" by brianj.seely on Sketchfab
+- Search result inspected on 2026-10-05 indicated CC Attribution.
+
+Before publishing or redistributing the final project, preserve the attribution
+required by each downloaded model and include its original license file.

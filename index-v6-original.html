@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>KRIPTOBIO — V4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+  <style>
+    :root{
+      --bg:#020407; --text:#eef3f2; --muted:#95a2a3;
+      --lymph:#72d9ce; --tissue:#713044; --pathogen:#d65362;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,sans-serif;color:var(--text)}
+    canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+    .vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 32%,rgba(0,0,0,.22) 70%,rgba(0,0,0,.65));z-index:2}
+    .grain{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.023;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+    .brand{position:fixed;left:26px;top:24px;z-index:5;font-family:"Space Grotesk";font-size:.71rem;letter-spacing:.17em;color:#c8d2d0}
+    .brand:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;background:var(--lymph);box-shadow:0 0 14px rgba(114,217,206,.7)}
+    .copy{position:fixed;z-index:5;left:6vw;bottom:10vh;width:min(430px,34vw);pointer-events:none;text-shadow:0 2px 22px rgba(0,0,0,.55)}
+    .kicker{color:var(--lymph);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin-bottom:11px}
+    h1{font-family:"Space Grotesk";font-size:clamp(2.3rem,4.2vw,4.6rem);line-height:.94;letter-spacing:-.055em;margin:0;font-weight:600}
+    .copy p{color:#b7c1c1;line-height:1.72;font-size:.96rem;max-width:390px}
+    .caption{position:fixed;right:4.5vw;top:17vh;z-index:5;font-size:.77rem;color:#8c9a99;pointer-events:none;max-width:200px}
+    .caption:before{content:"";display:block;width:110px;height:1px;background:linear-gradient(90deg,var(--lymph),transparent);margin-bottom:9px}
+    .caption strong{color:#edf2f1;display:block;font-weight:500;margin-bottom:4px}
+    .nav{position:fixed;z-index:6;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:16px;align-items:center}
+    .nav button{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(4,7,9,.3);backdrop-filter:blur(10px);color:white;cursor:pointer}
+    .counter{color:#748181;font-size:.7rem;letter-spacing:.14em;min-width:55px;text-align:center}
+    .progress{position:fixed;left:0;top:0;height:2px;width:0;background:var(--lymph);z-index:10;transition:width .5s}
+    .loader{position:fixed;inset:0;z-index:20;background:#020407;display:grid;place-items:center;transition:opacity .6s,visibility .6s}
+    .loader.hide{opacity:0;visibility:hidden}
+    .loaderBox{width:min(440px,80vw);text-align:center}
+    .loaderTitle{font-family:"Space Grotesk";font-size:1.8rem;margin-bottom:18px}
+    .track{height:2px;background:rgba(255,255,255,.08);overflow:hidden}
+    .bar{height:100%;width:5%;background:var(--lymph);transition:width .3s}
+    .loaderText{margin-top:12px;color:#768485;font-size:.76rem}
+    .credits{position:fixed;right:24px;bottom:24px;z-index:5;color:#536061;font-size:.62rem;text-align:right;max-width:300px}
+    .travel-vignette{
+      position:fixed;inset:0;pointer-events:none;z-index:4;
+      background:
+        radial-gradient(circle at center, transparent 0%, transparent 28%, rgba(0,0,0,.16) 55%, rgba(0,0,0,.55) 100%);
+      opacity:0; transition:opacity .5s ease;
+    }
+    .travel-vignette.active{opacity:1}
+    .travel-label{
+      position:fixed;left:50%;top:54%;transform:translate(-50%,-50%);
+      z-index:7;color:#dce6e5;font-size:.8rem;letter-spacing:.18em;
+      text-transform:uppercase;opacity:0;pointer-events:none;
+      transition:opacity .35s ease;
+      text-shadow:0 0 20px rgba(0,0,0,.45);
+    }
+    .travel-label.show{opacity:.9}
+
+    @media(max-width:800px){
+      .copy{left:20px;right:20px;bottom:88px;width:auto}
+      .copy h1{font-size:2.7rem}
+      .caption,.credits{display:none}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="webgl"></canvas>
+  <div class="vignette"></div><div class="grain"></div><div class="travel-vignette" id="travelVignette"></div><div class="travel-label" id="travelLabel">Entrando no organismo</div><div class="transition-mask" id="transitionMask"></div><div class="transition-wash" id="transitionWash"></div>
+  <div class="loader" id="loader">
+    <div class="loaderBox">
+      <div class="loaderTitle">Construindo o organismo</div>
+      <div class="track"><div class="bar" id="loadBar"></div></div>
+      <div class="loaderText" id="loadText">Preparando cena 3D...</div>
+    </div>
+  </div>
+  <div class="brand">KRIPTOBIO</div>
+  <div class="progress" id="progress"></div>
+  <div class="copy" id="copy">
+    <div class="kicker" id="kicker"></div>
+    <h1 id="title"></h1>
+    <p id="body"></p>
+  </div>
+  <div class="caption"><strong id="capTitle"></strong><span id="capBody"></span></div>
+  <div class="nav">
+    <button id="prev">←</button><div class="counter" id="counter"></div><button id="next">→</button>
+  </div>
+  <div class="credits">Modelo anatômico: BodyParts3D / Z-Anatomy quando carregado • uso educacional</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const renderer=new THREE.WebGLRenderer({canvas:document.querySelector('#webgl'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x020407);
+scene.fog=new THREE.FogExp2(0x020407,.04);
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.2,150);
+camera.position.set(0,.15,8.8);
+
+scene.add(new THREE.HemisphereLight(0xc7e7e2,0x241017,2.0));
+scene.add(new THREE.AmbientLight(0xffffff,.34));
+const key=new THREE.SpotLight(0xe9f6f3,60,40,Math.PI/5,.5,1);
+key.position.set(4,6,7); scene.add(key);
+const tissueLight=new THREE.PointLight(0x89364c,35,30); tissueLight.position.set(-4,-1,3); scene.add(tissueLight);
+const lymphLight=new THREE.PointLight(0x72d9ce,22,25); lymphLight.position.set(3,-2,4); scene.add(lymphLight);
+
+const stage=new THREE.Group(); scene.add(stage);
+const anatomyRig=new THREE.Group();
+const microRig=new THREE.Group();
+stage.add(anatomyRig,microRig);
+
+const anatomyGroup=new THREE.Group();
+const lymphGroup=new THREE.Group();
+const nodeGroup=new THREE.Group();
+anatomyRig.add(anatomyGroup,lymphGroup,nodeGroup);
+
+const microGroup=new THREE.Group();
+microRig.add(microGroup);
+
+// composição geral: corpo deslocado mais para a direita
+anatomyRig.position.set(1.55,-.05,0);
+microRig.position.set(.95,0,0);
+
+const focusMarker = new THREE.Mesh(
+  new THREE.SphereGeometry(.16,24,24),
+  new THREE.MeshPhysicalMaterial({
+    color:0x9deee0,
+    emissive:0x56ccb8,
+    emissiveIntensity:2.2,
+    transparent:true,
+    opacity:.0
+  })
+);
+focusMarker.position.set(-.42,1.0,.12);
+anatomyRig.add(focusMarker);
+
+const skinMat=new THREE.MeshPhysicalMaterial({color:0x713044,transparent:true,opacity:.18,roughness:.45,side:THREE.DoubleSide});
+const lymphMat=new THREE.MeshStandardMaterial({color:0x72d9ce,emissive:0x1d766e,emissiveIntensity:1.8});
+const nodeMat=new THREE.MeshPhysicalMaterial({color:0x9ee3d8,roughness:.45});
+const pathogenMat=new THREE.MeshStandardMaterial({color:0xd65362,emissive:0x661a27,emissiveIntensity:1.5});
+
+function blobGeometry(radius=1, detail=3, seed=0, amp=.08){
+  const g = new THREE.IcosahedronGeometry(radius, detail);
+  const p = g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const n = Math.sin((x+seed)*4.8) * Math.cos((y-seed)*3.9) * Math.sin((z+seed)*4.1);
+    const f = 1 + n * amp;
+    p.setXYZ(i, x*f, y*f, z*f);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+function createAntibody(scale=.55){
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({color:0xe6efec, roughness:.35});
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(.025*scale,.025*scale,.46*scale,10), mat);
+  stem.position.y = -.16*scale;
+  g.add(stem);
+  [-1,1].forEach(s=>{
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(.025*scale,.025*scale,.36*scale,10), mat);
+    arm.position.set(s*.11*scale,.12*scale,0);
+    arm.rotation.z = s*.64;
+    g.add(arm);
+  });
+  return g;
+}
+
+function tube(points,r=.025,mat=lymphMat){
+  const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
+  return new THREE.Mesh(new THREE.TubeGeometry(curve,80,r,9,false),mat);
+}
+function fallbackBody(){
+  const torso=new THREE.Mesh(new THREE.SphereGeometry(1,40,40),skinMat);
+  torso.scale.set(1.05,1.7,.55); torso.position.y=.1; anatomyGroup.add(torso);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.57,36,36),skinMat); head.position.y=2.15; anatomyGroup.add(head);
+  [-1,1].forEach(s=>{
+    const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.2,2.0,8,16),skinMat);arm.position.set(s*1.22,.25,0);arm.rotation.z=s*.15;anatomyGroup.add(arm);
+    const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.28,2.45,8,16),skinMat);leg.position.set(s*.4,-2.35,0);anatomyGroup.add(leg);
+  });
+}
+function fallbackLymph(){
+  lymphGroup.add(tube([[0,-2.8,.2],[0,-1.5,.22],[.05,-.3,.2],[0,.9,.17],[0,1.55,.13]],.035));
+  [-1,1].forEach(s=>{
+    lymphGroup.add(tube([[0,.7,.17],[s*.5,.48,.2],[s*1.15,.15,.09]],.023));
+    lymphGroup.add(tube([[0,-.5,.18],[s*.25,-1.25,.16],[s*.4,-2.7,.07]],.022));
+  });
+  [[0,1.35,.25],[-.3,1,.3],[.3,1,.3],[-.68,.18,.24],[.68,.18,.24],[-.25,-.28,.3],[.25,-.28,.3]].forEach(p=>{
+    const n=new THREE.Mesh(new THREE.SphereGeometry(.085,16,16),nodeMat);n.position.set(...p);lymphGroup.add(n);
+  });
+}
+function fallbackNode(){
+  const shellMat = new THREE.MeshPhysicalMaterial({
+    color:0x8b3f57, transparent:true, opacity:.38, roughness:.52,
+    transmission:.08, thickness:.4
+  });
+  const shell = new THREE.Mesh(blobGeometry(1.0,4,.35,.07), shellMat);
+  shell.scale.set(1.18,.92,.78);
+  nodeGroup.add(shell);
+
+  const cortex = new THREE.Mesh(
+    blobGeometry(.82,3,.15,.06),
+    new THREE.MeshPhysicalMaterial({color:0xb96f88, transparent:true, opacity:.18, roughness:.55})
+  );
+  cortex.scale.set(1.1,.88,.72);
+  nodeGroup.add(cortex);
+
+  const medulla = new THREE.Mesh(
+    blobGeometry(.52,3,.6,.08),
+    new THREE.MeshPhysicalMaterial({color:0xe2d3da, transparent:true, opacity:.28, roughness:.6})
+  );
+  medulla.scale.set(.95,.65,.55);
+  medulla.position.set(.08,-.02,0);
+  nodeGroup.add(medulla);
+
+  for(let i=0;i<55;i++){
+    const c = new THREE.Mesh(
+      blobGeometry(.04+Math.random()*.03,1,i*.15,.1),
+      new THREE.MeshPhysicalMaterial({
+        color: i%4===0 ? 0xa9eadc : 0xe7edef,
+        roughness:.38,
+        transparent:true,
+        opacity:.76
+      })
+    );
+    c.position.set((Math.random()-.5)*1.5,(Math.random()-.5)*1.0,(Math.random()-.5)*.72);
+    c.userData.floatOffset = Math.random()*Math.PI*2;
+    nodeGroup.add(c);
+  }
+
+  const vesselMat = new THREE.MeshStandardMaterial({color:0x73d9ce, emissive:0x2a8178, emissiveIntensity:1.5});
+  nodeGroup.add(tube([[-1.7,.22,0],[-1.15,.18,0],[-.78,.08,0]],.075,vesselMat));
+  nodeGroup.add(tube([[.62,-.08,0],[1.05,-.16,0],[1.65,-.22,0]],.06,vesselMat));
+}
+function makeMicro(){
+  // câmara / tecido ao redor
+  const chamber = new THREE.Mesh(
+    new THREE.SphereGeometry(8,42,42),
+    new THREE.MeshPhysicalMaterial({
+      color:0x2d0d16,
+      side:THREE.BackSide,
+      transparent:true,
+      opacity:.72,
+      roughness:.96
+    })
+  );
+  chamber.scale.set(1.2,.9,1.35);
+  chamber.position.set(.95,0,-1.6);
+  chamber.name = 'chamber';
+  microGroup.add(chamber);
+
+  const membrane = new THREE.Mesh(
+    blobGeometry(3.4,4,.5,.04),
+    new THREE.MeshPhysicalMaterial({
+      color:0x6b3042,
+      side:THREE.BackSide,
+      transparent:true,
+      opacity:.12,
+      roughness:.9
+    })
+  );
+  membrane.scale.set(1.4,.95,1.6);
+  membrane.position.set(.95,0,-1.4);
+  membrane.name = 'membrane';
+  microGroup.add(membrane);
+
+  // células de fundo mais orgânicas
+  for(let i=0;i<22;i++){
+    const c = new THREE.Mesh(
+      blobGeometry(.16+Math.random()*.16,2,i*.23,.1),
+      new THREE.MeshPhysicalMaterial({
+        color: i%5===0 ? 0xb7ddd8 : 0xdfe9e6,
+        roughness:.42,
+        transparent:true,
+        opacity:.34 + Math.random()*.34
+      })
+    );
+    c.position.set(.95 + (Math.random()-.5)*4.2,(Math.random()-.5)*2.6,-1.7 + (Math.random()-.5)*3.0);
+    c.userData.floatOffset = Math.random()*Math.PI*2;
+    c.userData.floatSpeed = .6 + Math.random()*1.1;
+    microGroup.add(c);
+  }
+
+  // macrófago
+  const macrophage = new THREE.Group();
+  macrophage.name = 'macrophage';
+  const macroCore = new THREE.Mesh(
+    blobGeometry(.64,4,.7,.12),
+    new THREE.MeshPhysicalMaterial({
+      color:0xb8e3de,
+      roughness:.5,
+      transparent:true,
+      opacity:.82
+    })
+  );
+  macrophage.add(macroCore);
+  for(let i=0;i<9;i++){
+    const arm = new THREE.Mesh(
+      blobGeometry(.12 + Math.random()*.05,1,i*.4,.12),
+      new THREE.MeshPhysicalMaterial({color:0xcde8e4, roughness:.52, transparent:true, opacity:.62})
+    );
+    const a = (i/9)*Math.PI*2;
+    arm.position.set(Math.cos(a)*.58, Math.sin(a)*.35, (Math.random()-.5)*.35);
+    arm.scale.set(1.4,.8,.7);
+    macrophage.add(arm);
+  }
+  macrophage.position.set(.25,-.08,.35);
+  microGroup.add(macrophage);
+
+  // patógeno mais legível
+  const pathogen = new THREE.Group();
+  pathogen.name = 'pathogen';
+  const pathogenCore = new THREE.Mesh(blobGeometry(.36,3,.9,.06), pathogenMat);
+  pathogen.add(pathogenCore);
+  for(let i=0;i<26;i++){
+    const s = new THREE.Mesh(new THREE.ConeGeometry(.035,.17,10), pathogenMat);
+    const dir = new THREE.Vector3().randomDirection();
+    s.position.copy(dir.clone().multiplyScalar(.45));
+    s.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    pathogen.add(s);
+  }
+  pathogen.position.set(1.62,.05,.22);
+  microGroup.add(pathogen);
+
+  // anticorpos
+  const antibodies = new THREE.Group();
+  antibodies.name = 'antibodies';
+  for(let i=0;i<12;i++){
+    const a = createAntibody(.72);
+    const ang = (i/12) * Math.PI * 2;
+    a.position.set(1.62 + Math.cos(ang)*.78, .05 + Math.sin(ang)*.55, .22 + (Math.random()-.5)*.55);
+    a.rotation.set(Math.random()*2,Math.random()*2,Math.random()*2);
+    antibodies.add(a);
+  }
+  microGroup.add(antibodies);
+
+  // túnel de transição para dar sensação de travessia
+  const tunnel = new THREE.Group();
+  tunnel.name = 'tunnel';
+  for(let i=0;i<22;i++){
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(1.28 + i*.03, .08 + (i%3)*.012, 12, 54),
+      new THREE.MeshPhysicalMaterial({
+        color: i%2===0 ? 0x4d1e2b : 0x6b3142,
+        transparent: true,
+        opacity: .14,
+        roughness: .92
+      })
+    );
+    ring.position.set(.95, .02, .2 - i*.42);
+    ring.rotation.x = Math.PI/2;
+    ring.rotation.z = i*.22;
+    tunnel.add(ring);
+  }
+  microGroup.add(tunnel);
+}
+microGroup.add(tunnel);
+}
+
+fallbackBody(); fallbackLymph(); fallbackNode(); makeMicro();
+
+// profundidade biológica ambiente
+const motes = new THREE.Group();
+scene.add(motes);
+for(let i=0;i<140;i++){
+  const g = new THREE.SphereGeometry(.012 + Math.random()*.04, 8, 8);
+  const m = new THREE.MeshBasicMaterial({
+    color: i % 3 === 0 ? 0xa0d8d0 : 0x5d2b3a,
+    transparent: true,
+    opacity: .08 + Math.random()*.18
+  });
+  const p = new THREE.Mesh(g,m);
+  p.position.set((Math.random()-.5)*16,(Math.random()-.5)*10,(Math.random()-.5)*16);
+  p.userData.speed = .0008 + Math.random()*.002;
+  p.userData.drift = (Math.random()-.5)*.0015;
+  motes.add(p);
+}
+
+const loader=new GLTFLoader();
+const loadState={anatomy:false,lymph:false,node:false};
+const uiLoader=document.querySelector('#loader'),bar=document.querySelector('#loadBar'),loadText=document.querySelector('#loadText');
+
+function normalizeModel(obj,targetMax=4.6){
+  // Zera transformações herdadas para medir o GLB de forma previsível.
+  obj.position.set(0,0,0);
+  obj.rotation.set(0,0,0);
+  obj.scale.set(1,1,1);
+  obj.updateMatrixWorld(true);
+
+  // Mede o modelo bruto.
+  let box = new THREE.Box3().setFromObject(obj);
+  let size = new THREE.Vector3();
+  box.getSize(size);
+
+  // Alguns modelos anatômicos vêm Z-up ou X-up.
+  // Faz o maior eixo virar o eixo vertical Y antes de calcular a escala.
+  if (size.z > size.y && size.z >= size.x) {
+    obj.rotation.x = -Math.PI / 2;
+  } else if (size.x > size.y && size.x > size.z) {
+    obj.rotation.z = Math.PI / 2;
+  }
+
+  obj.updateMatrixWorld(true);
+  box = new THREE.Box3().setFromObject(obj);
+  box.getSize(size);
+
+  // IMPORTANTE: escala pela MAIOR dimensão real, não por size.y.
+  const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+  const scale = targetMax / maxDim;
+  obj.scale.multiplyScalar(scale);
+  obj.updateMatrixWorld(true);
+
+  // Centraliza DEPOIS da rotação e da escala.
+  box = new THREE.Box3().setFromObject(obj);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  obj.position.x -= center.x;
+  obj.position.y -= center.y;
+  obj.position.z -= center.z;
+  obj.updateMatrixWorld(true);
+
+  // Mede novamente para debug e para confirmar que ficou em escala segura.
+  box = new THREE.Box3().setFromObject(obj);
+  box.getSize(size);
+  box.getCenter(center);
+
+  console.log("Modelo normalizado:", {
+    size: {x:size.x, y:size.y, z:size.z},
+    center: {x:center.x, y:center.y, z:center.z},
+    scale
+  });
+
+  return {box, size, center, maxDim:Math.max(size.x,size.y,size.z)};
+}
+
+function tryLoad(paths,onSuccess,onFail,label){
+  let idx=0;
+  const next=()=>{
+    if(idx>=paths.length){onFail();return;}
+    const path=paths[idx++];
+    loadText.textContent=`Tentando carregar ${label}...`;
+    loader.load(path,g=>{
+      onSuccess(g.scene,path);
+    },undefined,()=>next());
+  };
+  next();
+}
+
+// 1) Anatomia real: local first, remote fallback
+tryLoad(
+  ['./models/anatomy.glb','https://raw.githubusercontent.com/WaterCMY/anatomy-3d/main/models/anatomy.glb'],
+  (obj,path)=>{
+    anatomyGroup.clear(); const anatomyMetrics = normalizeModel(obj,4.6);
+    obj.traverse(o=>{
+      if(o.isMesh){
+        if (Array.isArray(o.material)) {
+          o.material = o.material.map(mat => {
+            const m = mat.clone();
+            m.transparent = false;
+            m.opacity = 1;
+            m.roughness = .72;
+            m.metalness = 0;
+            m.side = THREE.DoubleSide;
+            m.depthWrite = true;
+            m.depthTest = true;
+            return m;
+          });
+        } else {
+          o.material = o.material.clone();
+          o.material.transparent = false;
+          o.material.opacity = 1;
+          o.material.roughness = .82;
+          o.material.color.multiplyScalar(.92);
+          o.material.metalness = 0;
+          o.material.side = THREE.DoubleSide;
+          o.material.depthWrite = true;
+          o.material.depthTest = true;
+        }
+
+        // Mantém as normais originais do GLB.
+        // Recalcular aqui pode deixar alguns tecidos ainda mais facetados.
+      }
+    });
+    anatomyGroup.add(obj); loadState.anatomy=true;
+    loadText.textContent='Anatomia real carregada.';
+    bar.style.width='45%';
+  },
+  ()=>{loadText.textContent='Modelo anatômico não encontrado; usando fallback.';bar.style.width='35%';},
+  'anatomia'
+);
+
+// 2) Sistema linfático: put a downloaded GLB at models/lymphatic.glb
+tryLoad(
+  ['./models/lymphatic.glb'],
+  (obj)=>{
+    lymphGroup.clear(); normalizeModel(obj,4.6);
+    obj.traverse(o=>{
+      if(o.isMesh){
+        if (Array.isArray(o.material)) {
+          o.material = o.material.map(mat => {
+            const m = mat.clone();
+            m.transparent = false;
+            m.opacity = 1;
+            m.roughness = .5;
+            m.metalness = 0;
+            m.side = THREE.DoubleSide;
+            return m;
+          });
+        } else {
+          o.material = o.material.clone();
+          o.material.transparent = false;
+          o.material.opacity = 1;
+          o.material.roughness = .5;
+          o.material.metalness = 0;
+          o.material.side = THREE.DoubleSide;
+        }
+
+        // Mantém as normais originais do GLB.
+        // Recalcular aqui pode deixar alguns tecidos ainda mais facetados.
+      }
+    });
+    lymphGroup.add(obj); loadState.lymph=true;
+    bar.style.width='70%';
+  },
+  ()=>{bar.style.width='62%';},
+  'sistema linfático'
+);
+
+// 3) Linfonodo real
+tryLoad(
+  ['./models/lymph-node.glb'],
+  (obj)=>{
+    nodeGroup.clear(); normalizeModel(obj,2.2); nodeGroup.add(obj); loadState.node=true;
+    bar.style.width='90%';
+  },
+  ()=>{bar.style.width='82%';},
+  'linfonodo'
+);
+
+setTimeout(()=>{bar.style.width='100%';loadText.textContent='Experiência pronta.';setTimeout(()=>uiLoader.classList.add('hide'),450)},2200);
+
+const scenes=[
+ {k:'01 • Anatomia',t:'O corpo é o nosso mapa.',b:'Começamos em escala humana. O sistema linfático percorre o organismo e conecta regiões importantes para a vigilância imunológica.',ct:'Corpo humano',cb:'visão geral do organismo',m:'body',c:[2.55,.2,7.15],tar:[1.55,0,0],r:[0,.38,0],sp:[1.55,-.05,0],travel:null},
+ {k:'02 • Sistema linfático',t:'A defesa também depende de caminhos.',b:'Os vasos linfáticos recolhem a linfa e a conduzem até estruturas capazes de filtrar esse fluido e concentrar células de defesa.',ct:'Sistema linfático',cb:'rede de transporte e defesa',m:'body',c:[3.15,.45,6.2],tar:[1.5,.18,0],r:[0,.65,0],sp:[1.7,-.05,0],travel:null},
+ {k:'03 • Aproximação',t:'Agora nos aproximamos da entrada.',b:'Em vez de trocar de cena, a câmera se aproxima de uma região do sistema linfático até selecionar um ponto de vigilância imunológica.',ct:'Região focal',cb:'aproximação anatômica',m:'body',c:[2.1,1.0,3.95],tar:[1.05,1.0,0],r:[0,.78,0],sp:[1.45,-.02,0],travel:'approach-node'},
+ {k:'04 • Linfonodo',t:'Entrando no linfonodo.',b:'O linfonodo filtra a linfa e aproxima antígenos das células que podem iniciar uma resposta imunológica específica.',ct:'Linfonodo',cb:'ponto de vigilância',m:'node',c:[1.2,.15,3.25],tar:[.95,.02,0],r:[0,.08,0],sp:[.95,0,0],travel:'enter-node'},
+ {k:'05 • Escala microscópica',t:'Atravessamos a estrutura.',b:'A câmera atravessa a barreira anatômica e a cena muda de escala: agora estamos em um ambiente celular.',ct:'Escala microscópica',cb:'interior do tecido',m:'micro',c:[1.0,.08,5.1],tar:[.95,0,-1.8],r:[0,0,0],sp:[.95,0,0],travel:'enter-micro'},
+ {k:'06 • Imunidade inata',t:'A primeira resposta é rápida.',b:'Macrófagos e outras células da imunidade inata reconhecem padrões do patógeno e iniciam uma reação imediata.',ct:'Imunidade inata',cb:'reconhecimento do invasor',m:'micro',c:[.55,0,3.95],tar:[1.1,0,.18],r:[0,-.12,0],sp:[.95,0,0],travel:null},
+ {k:'07 • Anticorpos',t:'A resposta se torna específica.',b:'No nível molecular, anticorpos se ligam a antígenos específicos e ajudam a neutralizar ou marcar o invasor para eliminação.',ct:'Antígeno / anticorpo',cb:'reconhecimento molecular',m:'micro',c:[1.3,.08,3.2],tar:[1.65,.1,.32],r:[0,.06,0],sp:[.95,0,0],travel:null},
+ {k:'08 • Memória',t:'O organismo guarda o encontro.',b:'Células de memória permitem que uma exposição futura ao mesmo antígeno produza uma resposta mais rápida e eficiente.',ct:'Memória imunológica',cb:'princípio das vacinas',m:'body',c:[2.7,.18,6.95],tar:[1.5,0,0],r:[0,.34,0],sp:[1.55,-.05,0],travel:'return-body'}
+];
+
+const $=id=>document.querySelector(id);
+let current=0, mode='body';
+function setMode(m){
+  mode=m;
+  const isBody = m==='body';
+  const isNode = m==='node';
+  const isMicro = m==='micro';
+  if(m!=='micro'){ microRig.visible = false; }
+  if(m!=='node'){ nodeGroup.visible = false; }
+  anatomyGroup.visible = isBody;
+  lymphGroup.visible = isBody;
+  nodeGroup.visible = isNode;
+  microRig.visible = isMicro;
+  anatomyRig.visible = isBody || isNode;
+}
+function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+
+function enforceCameraSafety(target, minDistance=3.6){
+  const t = new THREE.Vector3(...target);
+  const dir = camera.position.clone().sub(t);
+  const dist = dir.length();
+  if (dist < minDistance) {
+    dir.normalize();
+    camera.position.copy(t.clone().add(dir.multiplyScalar(minDistance)));
+  }
+}
+
+let currentTarget = new THREE.Vector3(1.55,0,0);
+let tween=null;
+
+function setTravelUI(active, label=''){
+  const v = document.querySelector('#travelVignette');
+  const l = document.querySelector('#travelLabel');
+  v.classList.toggle('active', !!active);
+  l.textContent = label || 'Entrando no organismo';
+  l.classList.toggle('show', !!active);
+}
+
+function setTransitionMask(intensity=0){
+  const mask = document.querySelector('#transitionMask');
+  const wash = document.querySelector('#transitionWash');
+  mask.style.opacity = String(intensity);
+  mask.style.transform = `scale(${1.16 - intensity*0.18})`;
+  wash.style.opacity = String(intensity * .9);
+  const copy = document.querySelector('#copy');
+  copy.style.opacity = String(1 - intensity*0.35);
+}
+
+let transitionPulse = null;
+
+function animateCameraPath(points, targetFrom, targetTo, rotFrom, rotTo, posFrom, posTo, duration=2200, label='', options={}){
+  const curve = new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
+  const tFrom = new THREE.Vector3(...targetFrom);
+  const tTo = new THREE.Vector3(...targetTo);
+  const rFrom = new THREE.Euler(...rotFrom);
+  const rTo = new THREE.Euler(...rotTo);
+  const pFrom = new THREE.Vector3(...posFrom);
+  const pTo = new THREE.Vector3(...posTo);
+  const start = performance.now();
+  let switched = false;
+  const switchAt = options.switchAt ?? .5;
+
+  if (options.onStart) options.onStart();
+  setTravelUI(true, label);
+
+  tween = {
+    step(now){
+      const t = Math.min(1, (now-start)/duration);
+      const e = ease(t);
+      const camPos = curve.getPointAt(e);
+      camera.position.copy(camPos);
+
+      currentTarget.lerpVectors(tFrom, tTo, e);
+
+      stage.rotation.set(
+        THREE.MathUtils.lerp(rFrom.x, rTo.x, e),
+        THREE.MathUtils.lerp(rFrom.y, rTo.y, e),
+        THREE.MathUtils.lerp(rFrom.z, rTo.z, e)
+      );
+
+      const stagePos = new THREE.Vector3().lerpVectors(pFrom,pTo,e);
+      anatomyRig.position.copy(stagePos);
+
+      if(options.portal){
+        const portalIntensity = Math.sin(Math.min(1, Math.max(0,(t-.12)/.76)) * Math.PI);
+        setTransitionMask((portalIntensity**2) * (options.portalStrength ?? .95));
+      } else {
+        setTransitionMask(0);
+      }
+
+      if(!switched && options.onSwitch && t >= switchAt){
+        switched = true;
+        options.onSwitch();
+      }
+
+      if(options.focus){
+        focusMarker.material.opacity = (1-e) * .85;
+        focusMarker.scale.setScalar(1 + Math.sin(t*24) * .08);
+      }
+
+      enforceCameraSafety([currentTarget.x,currentTarget.y,currentTarget.z]);
+      camera.lookAt(currentTarget);
+
+      if (t >= 1){
+        tween = null;
+        setTravelUI(false);
+        setTransitionMask(0);
+        focusMarker.material.opacity = 0;
+        if (options.onEnd) options.onEnd();
+      }
+    }
+  };
+}
+
+function tweenCamera(cam,target,rot,stagePos,d=1600){
+  const from = camera.position.clone();
+  const to = new THREE.Vector3(...cam);
+  const r0 = stage.rotation.clone();
+  const r1 = new THREE.Euler(...rot);
+  const t0 = currentTarget.clone();
+  const t1 = new THREE.Vector3(...target);
+  const p0 = anatomyRig.position.clone();
+  const p1 = new THREE.Vector3(...stagePos);
+  const start = performance.now();
+
+  tween = {
+    step(now){
+      const t = Math.min(1, (now-start)/d);
+      const e = ease(t);
+
+      camera.position.lerpVectors(from,to,e);
+      currentTarget.lerpVectors(t0,t1,e);
+
+      stage.rotation.set(
+        THREE.MathUtils.lerp(r0.x,r1.x,e),
+        THREE.MathUtils.lerp(r0.y,r1.y,e),
+        THREE.MathUtils.lerp(r0.z,r1.z,e)
+      );
+
+      anatomyRig.position.lerpVectors(p0,p1,e);
+
+      enforceCameraSafety(target);
+      camera.lookAt(currentTarget);
+
+      if(t>=1){
+        tween=null;
+        setTransitionMask(0);
+      }
+    }
+  };
+}
+function go(i){
+  i=Math.max(0,Math.min(scenes.length-1,i));
+  const prev = scenes[current];
+  current=i;
+  const s=scenes[i];
+
+  $('#copy').animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],{duration:500,easing:'ease'});
+  $('#kicker').textContent=s.k;
+  $('#title').textContent=s.t;
+  $('#body').textContent=s.b;
+  $('#capTitle').textContent=s.ct;
+  $('#capBody').textContent=s.cb;
+  $('#counter').textContent=`${String(i+1).padStart(2,'0')} / ${String(scenes.length).padStart(2,'0')}`;
+  $('#progress').style.width=`${(i/(scenes.length-1))*100}%`;
+
+  // Primeiro estado: visibilidade adequada, mas sem destruir transições especiais
+  if(s.m === 'body'){
+    anatomyRig.visible = true;
+    anatomyGroup.visible = true;
+    lymphGroup.visible = true;
+    nodeGroup.visible = false;
+    microRig.visible = false;
+  }
+
+  if(prev && s.travel==='approach-node'){
+    anatomyRig.visible = true;
+    anatomyGroup.visible = true;
+    lymphGroup.visible = true;
+    nodeGroup.visible = false;
+    microRig.visible = false;
+    focusMarker.position.set(-.42,1.0,.12);
+    animateCameraPath(
+      [
+        [camera.position.x,camera.position.y,camera.position.z],
+        [2.9,.62,5.4],
+        [2.45,.98,4.7],
+        [2.1,1.0,3.95]
+      ],
+      [currentTarget.x,currentTarget.y,currentTarget.z],
+      s.tar,
+      [stage.rotation.x,stage.rotation.y,stage.rotation.z],
+      s.r,
+      [anatomyRig.position.x, anatomyRig.position.y, anatomyRig.position.z],
+      s.sp,
+      2200,
+      'aproximando o sistema linfático',
+      {focus:true}
+    );
+    return;
+  }
+
+  if(prev && s.travel==='enter-node'){
+    anatomyRig.visible = true;
+    anatomyGroup.visible = true;
+    lymphGroup.visible = true;
+    nodeGroup.visible = false;
+    microRig.visible = false;
+    focusMarker.position.set(-.42,1.0,.12);
+    animateCameraPath(
+      [
+        [camera.position.x,camera.position.y,camera.position.z],
+        [1.95,.85,3.35],
+        [1.55,.42,3.18],
+        [1.2,.15,3.25]
+      ],
+      [currentTarget.x,currentTarget.y,currentTarget.z],
+      s.tar,
+      [stage.rotation.x,stage.rotation.y,stage.rotation.z],
+      s.r,
+      [anatomyRig.position.x, anatomyRig.position.y, anatomyRig.position.z],
+      s.sp,
+      2000,
+      'entrando no linfonodo',
+      {
+        portal:true,
+        portalStrength:.78,
+        focus:true,
+        switchAt:.48,
+        onSwitch(){
+          anatomyGroup.visible = false;
+          lymphGroup.visible = false;
+          nodeGroup.visible = true;
+        }
+      }
+    );
+    return;
+  }
+
+  if(prev && s.travel==='enter-micro'){
+    anatomyRig.visible = true;
+    anatomyGroup.visible = false;
+    lymphGroup.visible = false;
+    nodeGroup.visible = true;
+    microRig.visible = false;
+    animateCameraPath(
+      [
+        [camera.position.x,camera.position.y,camera.position.z],
+        [1.0,.06,2.75],
+        [1.0,.04,1.7],
+        [1.0,.02,.6],
+        [1.0,.08,5.1]
+      ],
+      [currentTarget.x,currentTarget.y,currentTarget.z],
+      s.tar,
+      [stage.rotation.x,stage.rotation.y,stage.rotation.z],
+      s.r,
+      [anatomyRig.position.x, anatomyRig.position.y, anatomyRig.position.z],
+      s.sp,
+      2500,
+      'atravessando a estrutura',
+      {
+        portal:true,
+        portalStrength:1.0,
+        switchAt:.56,
+        onSwitch(){
+          nodeGroup.visible = false;
+          microRig.visible = true;
+        },
+        onEnd(){
+          anatomyRig.visible = false;
+          microRig.visible = true;
+        }
+      }
+    );
+    return;
+  }
+
+  if(prev && s.travel==='return-body'){
+    anatomyRig.visible = false;
+    microRig.visible = true;
+    animateCameraPath(
+      [
+        [camera.position.x,camera.position.y,camera.position.z],
+        [1.85,.12,4.25],
+        [2.35,.18,5.55],
+        [2.7,.18,6.95]
+      ],
+      [currentTarget.x,currentTarget.y,currentTarget.z],
+      s.tar,
+      [stage.rotation.x,stage.rotation.y,stage.rotation.z],
+      s.r,
+      [anatomyRig.position.x, anatomyRig.position.y, anatomyRig.position.z],
+      s.sp,
+      2200,
+      'retornando à escala humana',
+      {
+        portal:true,
+        portalStrength:.72,
+        switchAt:.5,
+        onSwitch(){
+          anatomyRig.visible = true;
+          anatomyGroup.visible = true;
+          lymphGroup.visible = true;
+          nodeGroup.visible = false;
+          microRig.visible = false;
+        }
+      }
+    );
+    return;
+  }
+
+  setMode(s.m);
+  tweenCamera(s.c,s.tar,s.r,s.sp,1500);
+}
+$('#next').onclick=()=>go(current===scenes.length-1?0:current+1);
+$('#prev').onclick=()=>go(current-1);
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight' || e.key==='PageDown') $('#next').click();
+  if(e.key==='ArrowLeft' || e.key==='PageUp') $('#prev').click();
+  if(e.key===' ') { e.preventDefault(); $('#next').click(); }
+  if(e.key.toLowerCase()==='r') go(current);
+});
+
+const clock=new THREE.Clock();
+function animate(now){
+  if(tween) tween.step(now);
+  const t=clock.getElapsedTime();
+
+  const pathogen = microGroup.getObjectByName('pathogen');
+  if(pathogen){
+    pathogen.rotation.y=t*.35;
+    pathogen.rotation.x=Math.sin(t*.5)*.12;
+    pathogen.position.y = .05 + Math.sin(t*1.1)*.05;
+  }
+
+  const antibodies = microGroup.getObjectByName('antibodies');
+  if(antibodies){
+    antibodies.children.forEach((a, idx)=>{
+      a.rotation.y += .006;
+      a.position.z += Math.sin(t*1.2 + idx)*.0008;
+    });
+  }
+
+  const macrophage = microGroup.getObjectByName('macrophage');
+  if(macrophage){
+    macrophage.rotation.y = Math.sin(t*.6)*.18;
+    macrophage.position.x = .25 + Math.sin(t*.7)*.08;
+  }
+
+  const tunnel = microGroup.getObjectByName('tunnel');
+  if(tunnel){
+    tunnel.rotation.z += .0012;
+    tunnel.children.forEach((r, idx)=>{
+      r.rotation.z += .0006 + idx*.00002;
+    });
+  }
+
+  // flutuação leve das células orgânicas
+  microGroup.children.forEach((obj, idx)=>{
+    if(obj.userData && obj.userData.floatSpeed){
+      obj.position.y += Math.sin(t*obj.userData.floatSpeed + obj.userData.floatOffset) * 0.0009;
+      obj.rotation.y += 0.0012;
+    }
+    if(obj.userData && obj.userData.floatOffset !== undefined && obj.geometry && obj !== pathogen){
+      obj.rotation.y += 0.0008;
+    }
+  });
+
+  anatomyRig.position.y += Math.sin(t*.8)*0.0007;
+  focusMarker.scale.setScalar(1 + Math.sin(t*5.5)*.08);
+
+  // vida nos pequenos pontos do linfonodo fallback
+  nodeGroup.children.forEach((obj, idx)=>{
+    if(idx > 2 && obj.geometry){
+      obj.position.y += Math.sin(t*1.2 + idx)*0.0006;
+    }
+  });
+
+  if(typeof motes !== 'undefined'){
+    motes.children.forEach((m)=>{
+      m.position.y += m.userData.speed;
+      m.position.x += m.userData.drift;
+      if(m.position.y > 5) m.position.y = -5;
+      if(m.position.x > 8) m.position.x = -8;
+      if(m.position.x < -8) m.position.x = 8;
+    });
+  }
+
+  renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+}
+currentTarget.set(...scenes[0].tar); go(0); requestAnimationFrame(animate);
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
