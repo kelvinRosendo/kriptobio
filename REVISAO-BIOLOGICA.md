@@ -15,6 +15,8 @@ Revisão realizada em 7 de outubro de 2026. O material é uma representação di
 
 ## Limites que continuam explícitos
 
+Refinamento posterior: o timo foi representado com lobos achatados e afilados, atrás de um esterno translúcido. A medula vermelha esternal recebeu contexto ósseo e legenda própria. O ducto torácico foi deslocado para maior profundidade no tórax; o baço ficou mais achatado e posterior. Os segmentos venosos receberam identificação explícita. Essas profundidades e silhuetas continuam esquemáticas e não reproduzem todas as relações com esôfago, coração, aorta ou vértebras.
+
 Não são mostrados todos os vasos, capilares, linfonodos, válvulas, tecidos linfoides de mucosa ou órgãos. O trajeto foi projetado sobre o corpo para legibilidade, com profundidades e calibres simplificados. As formas dos órgãos, a histologia do linfonodo e as organelas celulares são simplificações. Cores, proporções, movimentos e velocidades não reproduzem medidas reais. A cena celular não demonstra todos os contatos, sinais de ativação, apresentações de antígenos ou etapas moleculares descritos no texto.
 
 ## Fontes consultadas

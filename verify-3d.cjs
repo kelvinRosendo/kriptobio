@@ -15,6 +15,12 @@ assert.ok(rightDuct.geometry.parameters.path.getPoint(1).x<0,'Right duct termina
 for(const name of ['upper-limb--1','jugular-trunk--1']){const curve=api.lymph.getObjectByName(name).geometry.parameters.path;for(let i=0;i<=20;i++)assert.ok(curve.getPoint(i/20).x<0,'Right upper quadrant does not cross into left drainage');}
 assert.ok(api.organs.getObjectByName('spleen-left-upper-abdomen').position.x>0);
 assert.ok(api.organs.getObjectByName('palatine-tonsil').position.y>1.8,'Tonsils are in the pharyngeal region');
+const sternum=api.organs.getObjectByName('sternum-context'),marrow=api.organs.getObjectByName('sternal-red-marrow'),thymus=api.organs.getObjectByName('thymus-lobe');
+assert.ok(sternum&&marrow&&thymus,'Sternal marrow has visible bone context');
+const marrowPoint=marrow.geometry.parameters.path.getPoint(.5);
+assert.ok(marrowPoint.z>sternum.position.z&&marrowPoint.z<sternum.position.z+sternum.geometry.parameters.options.depth,'Marrow lies inside the sternal shell');
+assert.ok(thymus.position.z<sternum.position.z,'Thymus lies behind the sternum');
+assert.ok(thoracic.geometry.parameters.path.getPoint(.4).z<thymus.position.z,'Thoracic duct lies deeper than thymus');
 const bCell=api.micro.getObjectByName('B'),tCell=api.micro.getObjectByName('T'),plasma=api.micro.getObjectByName('Plasmócito');
 assert.equal(bCell.children[0].geometry.parameters.radius,tCell.children[0].geometry.parameters.radius,'Resting B/T morphology uses the same size');
 assert.ok(bCell.getObjectByName('nucleus').geometry.parameters.radius/bCell.children[0].geometry.parameters.radius>.7,'Lymphocyte nucleus occupies most of the cell');
