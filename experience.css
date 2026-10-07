@@ -24,3 +24,4 @@ footer{position:fixed;left:0;right:0;bottom:0;height:calc(70px + env(safe-area-i
 }
 @media(max-width:640px) and (max-height:650px){main{top:calc(44svh + 95px)}#world{height:44svh}.layer-tools{top:calc(44svh + 50px)}.gesture{top:calc(44svh + 91px)}#mobileBrief{font-size:11px}h1{font-size:21px}}
 @media(max-width:640px){.source-button{display:block;position:fixed;top:8px;right:62px;bottom:auto;min-height:34px;font-size:10px;z-index:6;padding:8px}.presenter-picker select:focus-visible{outline:2px solid var(--lime);outline-offset:2px}}
+@media(max-width:640px){.source-button{display:none}.header-sources{font-size:10px;border:0;width:48px;margin-left:auto;margin-right:8px}}
