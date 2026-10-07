@@ -5,5 +5,19 @@ vm.runInContext(fs.readFileSync('vendor/three.offline.js','utf8'),context);conte
 for(const name of ['models/anatomy-data.js','models/skin-data.js','experience.js'])vm.runInContext(fs.readFileSync(name,'utf8'),context);
 const api=context.window.INSIDE_DEFENSE;assert.ok(api,'3D initializes');assert.equal(api.content.length,6);assert.equal(api.raw.children.length,255);assert.equal(api.skin.children.length,1);const T=context.window.THREE;const bounds=new T.Box3().setFromObject(api.skin),size=bounds.getSize(new T.Vector3());assert.ok(Math.abs(size.y-4.8)<.001);assert.ok(size.x>1.7&&size.x<2.1);let triangles=0;api.raw.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;for(const n of p.array)assert.ok(Number.isFinite(n));triangles+=o.geometry.index.count/3}});assert.ok(triangles>50000);
 function step(){now+=2200;const queued=callbacks;callbacks=[];for(const f of queued)f(now)}step();
+// Structural regression checks for the selected didactic anatomy. These do
+// not certify clinical accuracy, but prevent reversal of side/drainage or
+// loss of the distinction between lymphocytes and antibody-secreting cells.
+const thoracic=api.lymph.getObjectByName('thoracic-duct'),rightDuct=api.lymph.getObjectByName('right-lymphatic-duct');
+assert.ok(thoracic&&rightDuct,'Both drainage ducts are shown');
+assert.ok(thoracic.geometry.parameters.path.getPoint(1).x>0,'Thoracic duct terminates on anatomical left');
+assert.ok(rightDuct.geometry.parameters.path.getPoint(1).x<0,'Right duct terminates on anatomical right');
+for(const name of ['upper-limb--1','jugular-trunk--1']){const curve=api.lymph.getObjectByName(name).geometry.parameters.path;for(let i=0;i<=20;i++)assert.ok(curve.getPoint(i/20).x<0,'Right upper quadrant does not cross into left drainage');}
+assert.ok(api.organs.getObjectByName('spleen-left-upper-abdomen').position.x>0);
+assert.ok(api.organs.getObjectByName('palatine-tonsil').position.y>1.8,'Tonsils are in the pharyngeal region');
+const bCell=api.micro.getObjectByName('B'),tCell=api.micro.getObjectByName('T'),plasma=api.micro.getObjectByName('Plasmócito');
+assert.equal(bCell.children[0].geometry.parameters.radius,tCell.children[0].geometry.parameters.radius,'Resting B/T morphology uses the same size');
+assert.ok(bCell.getObjectByName('nucleus').geometry.parameters.radius/bCell.children[0].geometry.parameters.radius>.7,'Lymphocyte nucleus occupies most of the cell');
+api.go(3,true);assert.ok(plasma.visible,'Plasma cell appears in antibody-producing scene');api.selectTopic(1);step();assert.ok(!plasma.visible,'T-cell scene does not show a secreting plasma cell');
 for(let i=0;i<6;i++){api.go(i);step();assert.equal(api.getState().chapter,i);for(let j=0;j<3;j++){api.selectTopic(j);step();assert.equal(api.getState().topic,j);assert.equal(api.getState().activeMode,api.content[i].topics[j][3]);assert.ok(el('detail').textContent.length>60);assert.ok(el('title').innerHTML)}}api.go(99);step();assert.equal(api.getState().chapter,5);api.go(-1);step();assert.equal(api.getState().chapter,0);
 assert.equal(el('error').textContent,'');const html=fs.readFileSync('index.html','utf8');for(const match of html.matchAll(/<script src="([^"]+)"/g))assert.ok(fs.existsSync(match[1]));assert.ok(!html.includes('type="module"'));assert.ok(!html.includes('cdn.'));console.log(`PASS: 6 chapters, all topic transitions, 255 anatomy meshes (${triangles} triangles), real skin alignment, local offline assets.`);
